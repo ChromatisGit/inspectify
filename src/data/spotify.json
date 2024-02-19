@@ -1,0 +1,5 @@
+{
+    "client_id": "f0c648acf82840a2a71bb3bd57ca3c25",
+    "redirect_uri": "http://localhost:3000/login",
+    "scope": "playlist-read-private playlist-modify-private"
+}

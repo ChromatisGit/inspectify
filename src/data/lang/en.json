@@ -1,0 +1,27 @@
+{
+    "any": {
+        "home": "Home",
+        "imprint": "Imprint",
+        "privacy": "Privacy",
+        "title": "Inspectify",
+        "description": "Inspectify your Spotify listening history"
+    },
+    "home": {},
+    "start": {
+        "history": "Use History",
+        "or": "or",
+        "login": {
+            "spotify": "Login with Spotify"
+        }
+    },
+    "login": {
+        "wait": "Waiting for context...",
+        "code": "Acquiring access code..."
+    },
+    "tools": {
+        "top": {
+            "title": "Top Tracks",
+            "description": "Your most listened to tracks"
+        }
+    }
+}
