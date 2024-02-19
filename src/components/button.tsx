@@ -1,5 +1,5 @@
 'use client';
-import { MouseEventHandler, ReactHTML, createElement } from 'react';
+import { MouseEventHandler, ReactHTML, createElement, ChangeEvent } from 'react';
 import '../styles/button.css';
 import Image, { StaticImageData } from 'next/image';
 import iconSpotify from '../images/Spotify_Icon_RGB_White.png';
@@ -7,6 +7,7 @@ import iconZip from '../svgs/iconmonstr-zip-7.svg';
 import iconHome from '../svgs/iconmonstr-home-9.svg';
 import dataSpotify from '@/data/spotify.json';
 import lang from '@/data/lang/en.json';
+import { readZip } from '@/utils/readZip';
 
 interface IButton {
     children?: any;
@@ -82,8 +83,26 @@ export function ButtonLoginSpotify() {
 }
 
 export function ButtonSubmitHistory() {
+
+    const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (file) {
+            readZip(file);
+        }
+    };
+
+    const onClick: MouseEventHandler<HTMLAnchorElement> = (e) => {
+        e.preventDefault();
+        const input = document.createElement('input');
+        input.setAttribute('type', 'file');
+        input.setAttribute('accept', '.zip');
+        // TODO This is too TypeScript for me to understand, but it works
+        input.onchange = handleFileChange;
+        input.click();
+    };
+
     return <>
-        <Button type="button" className="button-submit-history">
+        <Button className="button-submit-history" {...{ onClick }}>
             <Image src={iconZip} alt="Zip" width={32} />
             {lang.start.history}
         </Button>
