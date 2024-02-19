@@ -1,0 +1,13 @@
+.divider {
+    display: flex;
+    padding: 16px;
+}
+
+.divider > div::before, .divider > div::after {
+    content: '';
+    display: inline-flex;
+    width: 100px;
+    height: 1px;
+    background-color: #e0e0e0;
+    margin: 4px 8px;
+}
