@@ -1,10 +1,12 @@
 {
     "any": {
         "home": "Home",
-        "imprint": "Imprint",
-        "privacy": "Privacy",
         "title": "Inspectify",
-        "description": "Inspectify your Spotify listening history"
+        "description": "Inspectify your Spotify listening history",
+        "lang": {
+            "en": "English",
+            "de": "German"
+        }
     },
     "home": {},
     "start": {
@@ -23,5 +25,10 @@
             "title": "Top Tracks",
             "description": "Your most listened to tracks"
         }
+    },
+    "footer": {
+        "imprint": "Imprint",
+        "privacy": "Privacy",
+        "lang": "Language"
     }
 }
