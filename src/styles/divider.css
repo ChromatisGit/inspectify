@@ -1,13 +1,19 @@
 .divider {
     display: flex;
+}
+
+.divider-horizontal {
     padding: 16px;
 }
 
-.divider > div::before, .divider > div::after {
+.divider-horizontal > div::before, .divider-horizontal > div::after {
     content: '';
     display: inline-flex;
     width: 100px;
     height: 1px;
-    background-color: #e0e0e0;
     margin: 4px 8px;
+}
+
+.divider-white > div::before, .divider-white > div::after {
+    background-color: white;
 }
