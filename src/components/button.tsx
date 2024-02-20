@@ -6,7 +6,7 @@ import iconSpotify from '../images/Spotify_Icon_RGB_White.png';
 import iconZip from '../svgs/iconmonstr-zip-7.svg';
 import iconHome from '../svgs/iconmonstr-home-9.svg';
 import dataSpotify from '@/data/spotify.json';
-import { readZip } from '@/utils/readZip';
+import { convertZipToTrackData } from '@/utils/convertZipToTrackData';
 import { Lang, langFlat } from './lang';
 import { useInternalState } from './provider';
 
@@ -89,7 +89,7 @@ export function ButtonSubmitHistory() {
     const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
         const file = e.target.files && e.target.files[0];
         if (file) {
-            readZip(file);
+            convertZipToTrackData(file);
         }
     };
 
