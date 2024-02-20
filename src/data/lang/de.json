@@ -10,7 +10,7 @@
     },
     "home": {},
     "start": {
-        "history": "Benutze Streaming Verlauf",
+        "history": "Benutze Streamingverlauf",
         "or": "oder",
         "login": {
             "spotify": "Mit Spotify einloggen"
@@ -30,5 +30,10 @@
         "imprint": "Impressum",
         "privacy": "Datenschutz",
         "lang": "Sprache"
+    },
+    "upload": {
+        "unknownZipError": "Die ausgewählte Datei wurde nicht erkannt. Bitte wähle nur deinen 'Erweiterten Streamingverlauf' aus.",
+        "accountDataError": "Bitte wähle anstatt deiner 'Kontodaten' deinen 'Erweiterten Streamingverlauf' aus.",
+        "corruptJSONError": "Dein 'Erweiterter Streamingverlauf' enthält beschädigte Daten."
     }
 }

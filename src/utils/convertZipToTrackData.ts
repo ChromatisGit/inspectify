@@ -39,36 +39,38 @@ export async function convertZipToTrackData(file: File) {
     zipFile.files[filename].dir
   );
 
-  if (folderNames.length !== 1) {
-    console.error('Unknown zip file');
-    return;
-  }
+  if (folderNames.length !== 1)
+    return { error: 'unknownZipError' };
 
-  if (folderNames[0] === 'Spotify Account Data/') {
-    console.error('Use Extended Streaming History');
-    return;
-  }
+  if (folderNames[0] === 'Spotify Account Data/')
+    return { error: 'accountDataError' };
 
-  if (folderNames[0] !== 'Spotify Extended Streaming History/') {
-    console.error('Unknown zip file');
-    return;
-  }
+  if (folderNames[0] !== 'Spotify Extended Streaming History/')
+    return { error: 'unknownZipError' };
 
   const result: MergedResult = { ids: {}, trackData: {}, playCountData: {}, idCounter: 1 }
+  try {
+    await Promise.all(
+      Object.keys(zipFile.files).map(async (filename) => {
+        const fileData = await zipFile.files[filename].async('string');
+        if (filename.endsWith('.json')) {
+          try {
+            const spotifyData: SpotifyEntry[] = JSON.parse(fileData)
+            spotifyData.reduce((acc, entry) => convertToPlayCountFormat(acc, entry), result)
+          } catch (error) {
+            throw new Error('corruptJSONError');
+          }
+        }
+      })
+    );
 
-  await Promise.all(
-    Object.keys(zipFile.files).map(async (filename) => {
-      const fileData = await zipFile.files[filename].async('string');
-      if (filename.endsWith('.json')) {
-        const spotifyData: SpotifyEntry[] = JSON.parse(fileData)
-        spotifyData.reduce((acc, entry) => convertToPlayCountFormat(acc, entry), result)
-      }
-    })
-  );
+  } catch (error) {
+    return { error: 'corruptJSONError' };
+  }
 
   const playCountData = Object.keys(result.playCountData).sort().reduce(
     (obj, key) => {
-      obj[key] = playCountData[key];
+      obj[key] = result.playCountData[key];
       return obj;
     },
     {} as PlayCountData

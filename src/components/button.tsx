@@ -83,13 +83,20 @@ export function ButtonLoginSpotify() {
     )
 }
 
-export function ButtonSubmitHistory() {
+export async function ButtonSubmitHistory() {
     const ref: RefObject<HTMLInputElement> = createRef();
 
-    const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
+    const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = async (e) => {
         const file = e.target.files && e.target.files[0];
         if (file) {
-            convertZipToTrackData(file);
+            const result = await convertZipToTrackData(file);
+            if (result.error !== undefined) {
+                console.error(result.error)
+                return
+            }
+            const { playCountData, trackData } = result;
+            console.log(playCountData);
+            console.log(trackData)
         }
     };
 
