@@ -1,11 +1,14 @@
 import { useInternalState } from "./provider"
 
 import langEn from '@/data/lang/en.json';
+import langDe from '@/data/lang/de.json';
 
 const _lang: Record<string, any> = {
-    "en": langEn
+    en: langEn,
+    de: langDe
 }
 
+/// source: https://stackoverflow.com/questions/44134212/best-way-to-flatten-js-object-keys-and-values-to-a-single-depth-array#53739792
 function flattenObject(ob: any) {
     var toReturn : Record<string, string> = {};
 
@@ -27,7 +30,8 @@ function flattenObject(ob: any) {
 }
 
 const _langFlat : Record<string, Record<string, string>> = {
-    "en": flattenObject(langEn)
+    en: flattenObject(langEn),
+    de: flattenObject(langDe)
 }
 
 interface ILang {

@@ -1,0 +1,34 @@
+{
+    "any": {
+        "home": "Home",
+        "title": "Inspectify",
+        "description": "Inspectify your Spotify listening history",
+        "lang": {
+            "en": "Englisch",
+            "de": "Deutsch"
+        }
+    },
+    "home": {},
+    "start": {
+        "history": "Benutze Streaming Verlauf",
+        "or": "or",
+        "login": {
+            "spotify": "Mit Spotify einloggen"
+        }
+    },
+    "login": {
+        "wait": "Warte auf Kontext...",
+        "code": "Erfasse Zugriffscode..."
+    },
+    "tools": {
+        "top": {
+            "title": "Top Tracks",
+            "description": "Your most listened to tracks"
+        }
+    },
+    "footer": {
+        "imprint": "Imprint",
+        "privacy": "Privacy",
+        "lang": "Sprache"
+    }
+}
