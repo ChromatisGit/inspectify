@@ -1,13 +1,14 @@
 'use client';
-import { MouseEventHandler, ReactHTML, createElement, ChangeEvent } from 'react';
+import { MouseEventHandler, ReactHTML, createElement, ChangeEvent, createRef, RefObject, Component } from 'react';
 import '../styles/button.css';
 import Image, { StaticImageData } from 'next/image';
 import iconSpotify from '../images/Spotify_Icon_RGB_White.png';
 import iconZip from '../svgs/iconmonstr-zip-7.svg';
 import iconHome from '../svgs/iconmonstr-home-9.svg';
 import dataSpotify from '@/data/spotify.json';
-import lang from '@/data/lang/en.json';
 import { readZip } from '@/utils/readZip';
+import { Lang, langFlat } from './lang';
+import { useInternalState } from './provider';
 
 interface IButton {
     children?: any;
@@ -77,12 +78,13 @@ export function ButtonLoginSpotify() {
     return (
         <Button className="button-login-spotify" {...{ onClick }}>
             <Image src={iconSpotify} alt="Spotify" width={32} />
-            {lang.start.login.spotify}
+            <Lang code="start.login.spotify"/>
         </Button>
     )
 }
 
 export function ButtonSubmitHistory() {
+    const ref: RefObject<HTMLInputElement> = createRef();
 
     const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
         const file = e.target.files && e.target.files[0];
@@ -93,18 +95,14 @@ export function ButtonSubmitHistory() {
 
     const onClick: MouseEventHandler<HTMLAnchorElement> = (e) => {
         e.preventDefault();
-        const input = document.createElement('input');
-        input.setAttribute('type', 'file');
-        input.setAttribute('accept', '.zip');
-        // TODO This is too TypeScript for me to understand, but it works
-        input.onchange = handleFileChange;
-        input.click();
+        ref.current?.click();
     };
 
     return <>
-        <Button className="button-submit-history" {...{ onClick }}>
+        <input hidden={true} type="file" accept='.zip' onChange={handleFileChange} ref={ref} />
+        <Button className="button-submit-history" onClick={onClick}>
             <Image src={iconZip} alt="Zip" width={32} />
-            {lang.start.history}
+            <Lang code="start.history" />
         </Button>
     </>;
 }
@@ -112,7 +110,7 @@ export function ButtonSubmitHistory() {
 export function ButtonHome() {
     return <Button className="button-home" href="/home">
         <Image src={iconHome} alt="Home" width={24} />
-        {lang.any.home}
+        <Lang code="any.home"/>
     </Button>;
 }
 
@@ -124,16 +122,17 @@ interface IButtonTool {
     needs?: ["spotify" | "history"];
 }
 
-export function ButtonTool({ icon, name, href, needs, size } : IButtonTool) {
+export function ButtonTool({ icon, name, href, needs, size }: IButtonTool) {
+    const [internalState, _] = useInternalState();
     const disabled = needs && needs.includes("spotify") && !window.localStorage.getItem('access_token');
     return <Button className="button-tool" {...{ href, disabled }}>
         <div className="button-tool-left">
-        {icon && <Image src={icon} alt={name} width={size === "big" ? 48 : 32}/>}
-        {name}
+            {icon && <Image src={icon} alt={langFlat(internalState?.lang, name)} width={size === "big" ? 48 : 32} />}
+            <Lang code={name}/>
         </div>
         <div className="button-tool-right">
-            {needs && needs.includes("spotify") && <Image src={iconSpotify} alt="Spotify" width={size === "big" ? 32 : 24}/> }
-            {needs && needs.includes("history") && <Image src={iconZip} alt="Zip" width={size === "big" ? 32 : 24}/> }
+            {needs && needs.includes("spotify") && <Image src={iconSpotify} alt="Spotify" width={size === "big" ? 32 : 24} />}
+            {needs && needs.includes("history") && <Image src={iconZip} alt="Zip" width={size === "big" ? 32 : 24} />}
         </div>
     </Button>;
 }
