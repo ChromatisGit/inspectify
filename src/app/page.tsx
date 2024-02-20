@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { ButtonLoginSpotify, ButtonSubmitHistory } from "@/components/button";
 import { DividerHorizontal } from "@/components/divider";
 
