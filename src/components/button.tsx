@@ -95,8 +95,9 @@ export async function ButtonSubmitHistory() {
                 return
             }
             const { playCountData, trackData } = result;
-            console.log(playCountData);
-            console.log(trackData)
+            localStorage.setItem('play_count_data', JSON.stringify(playCountData))
+            localStorage.setItem('track_data', JSON.stringify(trackData))
+            window.location.href = '/home';
         }
     };
 
