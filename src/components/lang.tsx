@@ -40,7 +40,7 @@ export function Lang({ code }: ILang) {
     return _langFlat[internalState?.lang][code];
 }
 
-export function lang(__lang: string) {
+export function lang(__lang: string = "en") {
     return _lang[__lang];
 }
 
