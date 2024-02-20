@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useEffect, useReducer, useState } from "react";
+import { Dispatch, createContext, useContext, useEffect, useReducer, useState } from "react";
 
 const IsClientCtx = createContext(false);
 
@@ -37,7 +37,9 @@ export const InternalStateProvider = ({ children }: any) => {
     </__internalState.Provider>
 }
 
-export const useInternalState = () => [
+export const useInternalState : () => [ IState, Dispatch<IState> ] = () => [
     useContext(__internalState),
+    // still no idea how to make this work with typescript
+    //@ts-ignore
     useContext(__internalDispatch)
 ];
