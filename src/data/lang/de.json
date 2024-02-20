@@ -11,7 +11,7 @@
     "home": {},
     "start": {
         "history": "Benutze Streaming Verlauf",
-        "or": "or",
+        "or": "oder",
         "login": {
             "spotify": "Mit Spotify einloggen"
         }
@@ -27,8 +27,8 @@
         }
     },
     "footer": {
-        "imprint": "Imprint",
-        "privacy": "Privacy",
+        "imprint": "Impressum",
+        "privacy": "Datenschutz",
         "lang": "Sprache"
     }
 }
