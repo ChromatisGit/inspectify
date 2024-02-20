@@ -1,14 +1,13 @@
 'use client';
 import { useIsClient } from '@/components/provider';
 import dataSpotify from '@/data/spotify.json';
-import lang from '@/data/lang/en.json';
+import { Lang } from '@/components/lang';
 
 export default function Home() {
     const isClient = useIsClient();
     if (!isClient) return <main className="flex min-h-screen flex-col items-center justify-between p-24">
-        {lang.login.wait}
+        <Lang code="login.wait"/>
     </main>;
-    console.log("IS CLIENT");
 
     const urlParams = new URLSearchParams(window.location.search);
     let code = urlParams.get('code');
@@ -19,7 +18,6 @@ export default function Home() {
         
         if (codeVerifier === null) return;
 
-        console.log("LAST STEP");
 
         const params: Record<string, string> = {
             client_id: dataSpotify.client_id,
@@ -50,7 +48,7 @@ export default function Home() {
 
     return (
         <main className="flex min-h-screen flex-col items-center justify-between p-24">
-            {lang.login.code}
+            <Lang code="login.code"/>
         </main>
     );
 }
