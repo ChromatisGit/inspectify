@@ -20,7 +20,7 @@ interface IState {
 }
 
 const initialState: IState = {
-  lang: "en"
+  lang: typeof window !== "undefined" ? localStorage.getItem("lang") ?? "en" : "en"
 }
 
 const __internalState = createContext(initialState);

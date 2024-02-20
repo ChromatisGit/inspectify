@@ -1,3 +1,4 @@
+'use client';
 import { useInternalState } from "./provider"
 
 import langEn from '@/data/lang/en.json';
@@ -40,14 +41,16 @@ interface ILang {
 
 export function Lang({ code }: ILang) {
     const [internalState, _] = useInternalState();
-    if (!internalState) return;
-    return _langFlat[internalState?.lang][code];
+    const __lang = internalState?.lang ?? localStorage.getItem("lang") ?? "en";
+    return _langFlat[__lang][code];
 }
 
-export function lang(__lang: string = "en") {
+export function lang(__lang?: string) {
+    if (!__lang) __lang = localStorage.getItem("lang") ?? "en";
     return _lang[__lang];
 }
 
-export function langFlat(__lang: string = "en", code: string) {
+export function langFlat(__lang: string | undefined = undefined, code: string) {
+    if (!__lang) __lang = localStorage.getItem("lang") ?? "en";
     return _langFlat[__lang][code];
 }
