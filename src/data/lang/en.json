@@ -34,6 +34,7 @@
     "upload": {
         "unknownZipError": "The selected file appears to be an unknown file. Please only select your 'Extended streaming history'.",
         "accountDataError": "Please select your 'Extended streaming history' instead of your 'Account data'.",
-        "corruptJSONError": "Your 'Extended streaming history' contains corrupt data."
+        "corruptJSONError": "Your 'Extended streaming history' contains corrupt data.",
+        "unknownError": "An unknown error occurred. Please try again."
     }
 }

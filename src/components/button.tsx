@@ -78,26 +78,36 @@ export function ButtonLoginSpotify() {
     return (
         <Button className="button-login-spotify" {...{ onClick }}>
             <Image src={iconSpotify} alt="Spotify" width={32} />
-            <Lang code="start.login.spotify"/>
+            <Lang code="start.login.spotify" />
         </Button>
     )
 }
 
-export async function ButtonSubmitHistory() {
+export function ButtonSubmitHistory({ callbackError }: {callbackError: (error: string)=> void}) {
     const ref: RefObject<HTMLInputElement> = createRef();
 
-    const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = async (e) => {
+    const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
         const file = e.target.files && e.target.files[0];
         if (file) {
-            const result = await convertZipToTrackData(file);
-            if (result.error !== undefined) {
-                console.error(result.error)
-                return
-            }
-            const { playCountData, trackData } = result;
-            localStorage.setItem('play_count_data', JSON.stringify(playCountData))
-            localStorage.setItem('track_data', JSON.stringify(trackData))
-            window.location.href = '/home';
+            convertZipToTrackData(file)
+                .then(result => {
+                    console.log("success")
+                    const { playCountData, trackData } = result;
+                    localStorage.setItem('play_count_data', JSON.stringify(playCountData));
+                    localStorage.setItem('track_data', JSON.stringify(trackData));
+                    window.location.href = '/home';
+                })
+                .catch((error: Error) => {
+                    switch (error.message) {
+                        case 'upload.unknownZipError':
+                        case 'upload.accountDataError':
+                        case 'upload.corruptJSONError':
+                            callbackError(error.message);
+                            break;
+                        default:
+                            callbackError('upload.unknownError');
+                    }
+                });
         }
     };
 
@@ -118,7 +128,7 @@ export async function ButtonSubmitHistory() {
 export function ButtonHome() {
     return <Button className="button-home" href="/home">
         <Image src={iconHome} alt="Home" width={24} />
-        <Lang code="any.home"/>
+        <Lang code="any.home" />
     </Button>;
 }
 
@@ -136,7 +146,7 @@ export function ButtonTool({ icon, name, href, needs, size }: IButtonTool) {
     return <Button className="button-tool" {...{ href, disabled }}>
         <div className="button-tool-left">
             {icon && <Image src={icon} alt={langFlat(internalState?.lang, name)} width={size === "big" ? 48 : 32} />}
-            <Lang code={name}/>
+            <Lang code={name} />
         </div>
         <div className="button-tool-right">
             {needs && needs.includes("spotify") && <Image src={iconSpotify} alt="Spotify" width={size === "big" ? 32 : 24} />}

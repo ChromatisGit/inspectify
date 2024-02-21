@@ -34,6 +34,7 @@
     "upload": {
         "unknownZipError": "Die ausgewählte Datei wurde nicht erkannt. Bitte wähle nur deinen 'Erweiterten Streamingverlauf' aus.",
         "accountDataError": "Bitte wähle anstatt deiner 'Kontodaten' deinen 'Erweiterten Streamingverlauf' aus.",
-        "corruptJSONError": "Dein 'Erweiterter Streamingverlauf' enthält beschädigte Daten."
+        "corruptJSONError": "Dein 'Erweiterter Streamingverlauf' enthält beschädigte Daten.",
+        "unknownError": "Ein unbekannter Fehler ist aufgetreten. Bitte versuche es erneut."
     }
 }
