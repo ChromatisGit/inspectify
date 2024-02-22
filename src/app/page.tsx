@@ -3,9 +3,8 @@
 import { ButtonLoginSpotify, ButtonSubmitHistory } from "@/components/button";
 import { DividerHorizontal } from "@/components/divider";
 import { Footer } from "@/components/footer";
-import { Lang, lang, langFlat } from "@/components/lang";
+import { Lang, langFlat } from "@/components/lang";
 import { toast, ToastContainer } from 'react-toastify';
-import { useState } from 'react';
 
 import 'react-toastify/dist/ReactToastify.css';
 import { useInternalState } from "@/components/provider";
@@ -20,9 +19,16 @@ export default function Home() {
       })
   }
 
+  const sendMessage = (code: string) => {
+    const str = langFlat(internalState?.lang, code)
+    toast.success(str,{
+        position: "bottom-center"
+      })
+  }
+
   return <>
     <main className="flex min-h-screen flex-col items-center p-24">
-      <ButtonSubmitHistory callbackError={throwError}/>
+      <ButtonSubmitHistory callbackError={throwError} callbackSuccess={sendMessage}/>
       <DividerHorizontal>
         <Lang code="start.or" />
       </DividerHorizontal>

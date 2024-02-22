@@ -83,7 +83,12 @@ export function ButtonLoginSpotify() {
     )
 }
 
-export function ButtonSubmitHistory({ callbackError }: {callbackError: (error: string)=> void}) {
+interface callback {
+    callbackError: (code: string)=> void,
+    callbackSuccess: (code: string)=> void,
+}
+
+export function ButtonSubmitHistory({ callbackError, callbackSuccess }: callback) {
     const ref: RefObject<HTMLInputElement> = createRef();
 
     const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
@@ -95,6 +100,7 @@ export function ButtonSubmitHistory({ callbackError }: {callbackError: (error: s
                     const { playCountData, trackData } = result;
                     localStorage.setItem('play_count_data', JSON.stringify(playCountData));
                     localStorage.setItem('track_data', JSON.stringify(trackData));
+                    callbackSuccess('upload.success')
                     window.location.href = '/home';
                 })
                 .catch((error: Error) => {
