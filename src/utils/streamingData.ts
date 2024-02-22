@@ -1,5 +1,5 @@
 export interface TrackData {
-    [key: number]:
+    [key: string]:
     {
         track: string,
         artist: string,
@@ -17,75 +17,111 @@ export interface PlayData {
 }
 
 export class StreamingData {
-    private data: PlayData;
-    private tracks: TrackData;
+    private _tracks: TrackData;
 
-    constructor({ data, tracks }: { data?: {}, tracks?: TrackData }) {
-        this.data = data || getJSONFromLocalStorage('play_count_data')
-        this.tracks = tracks || getJSONFromLocalStorage('track_data')
+    private _data: PlayData;
+    public get data(): PlayData {
+        return structuredClone(this._data);
+    }
+
+    constructor({ data, tracks }: { data: {}, tracks: TrackData }) {
+        this._data = data
+        this._tracks = tracks
     }
 
     public returnCopy(): StreamingData {
         const copy = new StreamingData({
-            data: structuredClone(this.data),
-            tracks: this.tracks
+            data: this.data,
+            tracks: this._tracks
         });
         return copy;
     }
 
-    before(year: number, month: number): ThisType<StreamingData> {
+    public before(year: number, month: number): this {
         let res: PlayData = {};
 
-        Object.entries(this.data).forEach(([period, data]) => {
+        Object.entries(this._data).forEach(([period, entry]) => {
             const year2 = Number(period.slice(0, 4));
             const month2 = Number(period.slice(5, 7));
 
             if (year2 < year || (year2 === year && month2 < month)) {
-                res[period] = data;
+                res[period] = entry;
             }
         });
 
-        this.data = res;
+        this._data = res;
         return this;
     }
 
-    after(year: number, month: number): ThisType<StreamingData> {
+    public after(year: number, month: number): this {
         let res: PlayData = {};
 
-        Object.entries(this.data).forEach(([period, data]) => {
+        Object.entries(this._data).forEach(([period, entry]) => {
             const year2 = Number(period.slice(0, 4));
             const month2 = Number(period.slice(5, 7));
 
             if (year2 > year || (year2 === year && month2 > month)) {
-                res[period] = data;
+                res[period] = entry;
             }
         });
 
-        this.data = res;
+        this._data = res;
+        return this;
+    }
+
+    public groupAll(): this {
+        const res: PlayData = { 'total': {} };
+
+        Object.values(this._data).forEach((obj) => {
+            Object.entries(obj).forEach(([id, { playCount, playTime }]) => {
+                const entry =  res['total'][id] || (res['total'][id] = {playCount: 0, playTime: 0})
+                entry.playCount += playCount;
+                entry.playTime += playTime;
+            });
+        });
+
+        this._data = res
+        return this;
+    }
+
+    public groupByYear(): this {
+        const res: PlayData = {};
+
+        Object.entries(this._data).forEach(([period, obj]) => {
+            const year = period.slice(0, 4);
+
+            Object.entries(obj).forEach(([id, { playCount, playTime }]) => {
+                const group = res[year] || (res[year] = {});
+                const entry =  group[id] || (group[id] = {playCount: 0, playTime: 0})
+                entry.playCount += playCount;
+                entry.playTime += playTime;
+            });
+        });
+
+        this._data = res;
+        return this;
+    }
+
+    public groupByArtist(): this {
+        const res: PlayData = {};
+
+        Object.entries(this._data).forEach(([period, obj]) => {
+            Object.entries(obj).forEach(([id, { playCount, playTime }]) => {
+                const artist = this._tracks[id].artist
+                const group = res[period] || (res[period] = {});
+                const entry =  group[artist] || (group[artist] = {playCount: 0, playTime: 0})
+                entry.playCount += playCount;
+                entry.playTime += playTime;
+            });
+        });
+
+        this._data = res;
         return this;
     }
 }
 
-class StreamingDataArray {
-    private data: [];
-    private tracks: TrackData;
-
-    constructor({ data, tracks }: { data: [], tracks: TrackData }) {
-        this.data = data
-        this.tracks = tracks
-    }
-
-    public returnCopy(): StreamingDataArray {
-        const copy = new StreamingDataArray({
-            data: structuredClone(this.data),
-            tracks: this.tracks
-        });
-        return copy;
-    }
-}
-
-function getJSONFromLocalStorage(key: string) {
-    const dataString = localStorage.getItem(key);
+export function getJSONFromLocalStorage(key: string, storage: Storage) {
+    const dataString = storage.getItem(key);
     if (dataString === null)
         throw new Error('No data found')
     try {
