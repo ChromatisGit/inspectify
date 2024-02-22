@@ -1,4 +1,5 @@
 import JSZip from 'jszip';
+import { TrackData, PlayData } from './streamingData';
 
 interface SpotifyEntry {
   ts: string,
@@ -9,22 +10,8 @@ interface SpotifyEntry {
   spotify_track_uri: string
 }
 
-interface PlayCountData {
-  [key: string]: { [key: number]: number }
-}
-
-interface TrackData {
-  [key: number]:
-  {
-    track: string,
-    artist: string,
-    uri: string,
-    album: string
-  }
-}
-
 interface MergedResult {
-  playCountData: PlayCountData;
+  playData: PlayData;
   trackData: TrackData;
   idCounter: number;
   ids: { [key: string]: number };
@@ -45,7 +32,7 @@ export async function convertZipToTrackData(file: File) {
   if (folderNames.length !== 1 || folderNames[0] !== 'Spotify Extended Streaming History/')
     throw new Error('upload.unknownZipError')
 
-  const result: MergedResult = { ids: {}, trackData: {}, playCountData: {}, idCounter: 1 }
+  const result: MergedResult = { ids: {}, trackData: {}, playData: {}, idCounter: 1 }
   await Promise.all(
     Object.keys(zipFile.files).map(async (filename) => {
       const fileData = await zipFile.files[filename].async('string');
@@ -60,17 +47,17 @@ export async function convertZipToTrackData(file: File) {
     })
   );
 
-  const playCountData = Object.keys(result.playCountData).sort().reduce(
+  const playData = Object.keys(result.playData).sort().reduce(
     (obj, key) => {
-      obj[key] = result.playCountData[key];
+      obj[key] = result.playData[key];
       return obj;
     },
-    {} as PlayCountData
+    {} as PlayData
   );
 
   const { trackData } = result;
 
-  return { playCountData, trackData }
+  return { playData, trackData }
 }
 
 function convertToPlayCountFormat(acc: MergedResult, entry: SpotifyEntry) {
@@ -94,8 +81,9 @@ function convertToPlayCountFormat(acc: MergedResult, entry: SpotifyEntry) {
     }
 
     // Increase Play Count
-    const periodMap = acc.playCountData[period] || (acc.playCountData[period] = {});
-    periodMap[id] = (periodMap[id] ?? 0) + 1;
+    const periodMap = acc.playData[period] || (acc.playData[period] = {});
+    periodMap[id].playCount = (periodMap[id].playCount ?? 0) + 1;
+    periodMap[id].playTime = (periodMap[id].playTime ?? 0) + Math.floor(entry.ms_played/1000);
   }
 
   return acc;

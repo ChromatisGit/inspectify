@@ -97,8 +97,8 @@ export function ButtonSubmitHistory({ callbackError, callbackSuccess }: callback
             convertZipToTrackData(file)
                 .then(result => {
                     console.log("success")
-                    const { playCountData, trackData } = result;
-                    localStorage.setItem('play_count_data', JSON.stringify(playCountData));
+                    const { playData, trackData } = result;
+                    localStorage.setItem('play_count_data', JSON.stringify(playData));
                     localStorage.setItem('track_data', JSON.stringify(trackData));
                     callbackSuccess('upload.success')
                     window.location.href = '/home';
