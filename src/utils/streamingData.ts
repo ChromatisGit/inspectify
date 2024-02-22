@@ -16,6 +16,13 @@ export interface PlayData {
     }
 }
 
+interface PlayDataArray {
+    [group: string]:
+    {
+        id: string, playTime: number; playCount: number
+    }[]
+}
+
 export class StreamingData {
     private _tracks: TrackData;
 
@@ -24,7 +31,7 @@ export class StreamingData {
         return structuredClone(this._data);
     }
 
-    constructor({ data, tracks }: { data: {}, tracks: TrackData }) {
+    constructor({ data, tracks }: { data: PlayData, tracks: TrackData }) {
         this._data = data
         this._tracks = tracks
     }
@@ -74,7 +81,7 @@ export class StreamingData {
 
         Object.values(this._data).forEach((obj) => {
             Object.entries(obj).forEach(([id, { playCount, playTime }]) => {
-                const entry =  res['total'][id] || (res['total'][id] = {playCount: 0, playTime: 0})
+                const entry = res['total'][id] || (res['total'][id] = { playCount: 0, playTime: 0 })
                 entry.playCount += playCount;
                 entry.playTime += playTime;
             });
@@ -92,7 +99,7 @@ export class StreamingData {
 
             Object.entries(obj).forEach(([id, { playCount, playTime }]) => {
                 const group = res[year] || (res[year] = {});
-                const entry =  group[id] || (group[id] = {playCount: 0, playTime: 0})
+                const entry = group[id] || (group[id] = { playCount: 0, playTime: 0 })
                 entry.playCount += playCount;
                 entry.playTime += playTime;
             });
@@ -109,7 +116,7 @@ export class StreamingData {
             Object.entries(obj).forEach(([id, { playCount, playTime }]) => {
                 const artist = this._tracks[id].artist
                 const group = res[period] || (res[period] = {});
-                const entry =  group[artist] || (group[artist] = {playCount: 0, playTime: 0})
+                const entry = group[artist] || (group[artist] = { playCount: 0, playTime: 0 })
                 entry.playCount += playCount;
                 entry.playTime += playTime;
             });
@@ -117,6 +124,69 @@ export class StreamingData {
 
         this._data = res;
         return this;
+    }
+
+    public sort() {
+        const res: PlayDataArray = {};
+
+        Object.entries(this._data).forEach(([period, arr]) => {
+            res[period] = Object.entries(arr)
+                .sort(([, a], [, b]) => {
+                    if (a.playCount === b.playCount) {
+                        return b.playTime - a.playTime;
+                    }
+                    return b.playCount - a.playCount;
+                })
+                .map(([id, entry]) => ({ id, ...entry }));
+        });
+
+        return new StreamingDataArray({ data: res, tracks: this._tracks });
+    }
+}
+
+export class StreamingDataArray {
+    private _tracks: TrackData;
+
+    private _data: PlayDataArray;
+    public get data(): PlayDataArray {
+        return structuredClone(this._data);
+    }
+
+    constructor({ data, tracks }: { data: PlayDataArray, tracks: TrackData }) {
+        this._data = data
+        this._tracks = tracks
+    }
+
+    public returnCopy(): StreamingDataArray {
+        const copy = new StreamingDataArray({
+            data: this.data,
+            tracks: this._tracks
+        });
+        return copy;
+    }
+
+    public getTop(top: number): this {
+        Object.entries(this._data).forEach(([period, arr]) => {
+            if (arr.length >= top) {
+                this._data[period] = arr.slice(0, top);
+            }
+        });
+        return this;
+    }
+
+    public convertToSongObj() {
+        const res: PlayData = {};
+
+        Object.entries(this.data).forEach(([period, arr]) => {
+            res[period] = {}
+            arr.forEach((entry, pos) => {
+                const {id, ...rest} = entry
+                res[period][pos] = { ...this._tracks[id], ...rest };
+            });
+
+            res;
+        })
+        return new StreamingData({ data: res, tracks: this._tracks })
     }
 }
 

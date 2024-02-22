@@ -9,7 +9,7 @@ export default function Home() {
         tracks: getJSONFromLocalStorage('track_data', localStorage)
     })
 
-    const res = playCount.after(2023, 5).groupByYear().groupByArtist().data
+    const res = playCount.after(2023, 5).groupByYear().sort().getTop(10).convertToSongObj().data
 
     console.log(res)
 
