@@ -39,8 +39,9 @@ export async function convertZipToTrackData(file: File) {
       if (filename.endsWith('.json')) {
         try {
           const spotifyData: SpotifyEntry[] = JSON.parse(fileData)
-          spotifyData.reduce((acc, entry) => convertToPlayCountFormat(acc, entry), result)
+          spotifyData.reduce((acc, entry) => convertToPlayFormat(acc, entry), result)
         } catch (error) {
+          console.error(error)
           throw new Error('upload.corruptJSONError')
         }
       }
@@ -60,7 +61,7 @@ export async function convertZipToTrackData(file: File) {
   return { playData, trackData }
 }
 
-function convertToPlayCountFormat(acc: MergedResult, entry: SpotifyEntry) {
+function convertToPlayFormat(acc: MergedResult, entry: SpotifyEntry) {
   if (entry.ms_played > 30000 && entry.master_metadata_track_name) {
 
     const trackArtistKey = `${entry.master_metadata_track_name}-${entry.master_metadata_album_artist_name}`;
@@ -82,8 +83,10 @@ function convertToPlayCountFormat(acc: MergedResult, entry: SpotifyEntry) {
 
     // Increase Play Count
     const periodMap = acc.playData[period] || (acc.playData[period] = {});
-    periodMap[id].playCount = (periodMap[id].playCount ?? 0) + 1;
-    periodMap[id].playTime = (periodMap[id].playTime ?? 0) + Math.floor(entry.ms_played/1000);
+    const newEntry =  periodMap[id] || (periodMap[id] = {playCount: 0, playTime: 0})
+
+    newEntry.playCount += 1;
+    newEntry.playTime += Math.floor(entry.ms_played/1000);
   }
 
   return acc;
