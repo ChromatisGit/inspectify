@@ -1,6 +1,6 @@
 'use client';
 import { ButtonHome } from "@/components/button";
-import { StreamingData, getJSONFromLocalStorage } from "@/utils/streamingData";
+import { StreamingData } from "@/utils/streamingData";
 
 interface Settings {
     top: number,
@@ -10,10 +10,7 @@ interface Settings {
 
 export default function Home() {
 
-    const playCount = new StreamingData({
-        data: getJSONFromLocalStorage('play_count_data', localStorage),
-        tracks: getJSONFromLocalStorage('track_data', localStorage)
-    })
+    const playCount = new StreamingData(localStorage)
 
     const settings: Settings = {top: 10, show: "artists", time: "year"}
 
@@ -26,7 +23,7 @@ export default function Home() {
     if(settings.show === "artists")
         playCount.groupByArtist()
 
-    playCount.getTop(settings.top).enrichPlayData(settings.show)
+    playCount.sort().getTop(settings.top).enrichPlayData(settings.show)
 
     console.log(playCount.data)
 

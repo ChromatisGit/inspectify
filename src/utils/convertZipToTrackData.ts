@@ -11,10 +11,18 @@ interface SpotifyEntry {
 }
 
 interface MergedResult {
-  playData: PlayData;
+  playData: PlayDataObj;
   trackData: TrackData;
   idCounter: number;
   ids: { [key: string]: number };
+}
+
+interface PlayDataObj {
+  [group: string]: {
+    [entry: string]: {
+        playTime: number; playCount: number
+    }
+}
 }
 
 export async function convertZipToTrackData(file: File) {
@@ -48,9 +56,9 @@ export async function convertZipToTrackData(file: File) {
     })
   );
 
-  const playData = Object.keys(result.playData).sort().reduce(
+  const playData: PlayData = Object.keys(result.playData).sort().reduce(
     (obj, key) => {
-      obj[key] = result.playData[key];
+      obj[key] = Object.entries(result.playData[key]).map(([id, entry]) => ({ id, ...entry }));
       return obj;
     },
     {} as PlayData

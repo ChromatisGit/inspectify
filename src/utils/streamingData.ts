@@ -9,7 +9,6 @@ export interface TrackData {
 }
 
 interface PlayDataEntry {
-    [entry: string]: {
         playTime: number;
         playCount: number;
         id?: string
@@ -17,11 +16,10 @@ interface PlayDataEntry {
         artist?: string;
         uri?: string;
         album?: string;
-    }
 }
 
 export interface PlayData {
-    [group: string]: PlayDataEntry
+    [group: string]: PlayDataEntry[]
 }
 
 export class StreamingData {
@@ -32,16 +30,21 @@ export class StreamingData {
         return structuredClone(this._data);
     }
 
-    constructor({ data, tracks }: { data: PlayData, tracks: TrackData }) {
-        this._data = data
-        this._tracks = tracks
+    constructor(source: Storage | StreamingData) {
+        if (source instanceof Storage) {
+            this._data = this.getJSONFromLocalStorage('play_count_data', source);
+            this._tracks = this.getJSONFromLocalStorage('track_data', source);
+            return
+        }
+        if (source instanceof StreamingData) {
+            this._data = source.data;
+            this._tracks = source._tracks;
+        }
+        throw new Error()
     }
 
     public copy(): StreamingData {
-        const copy = new StreamingData({
-            data: this.data,
-            tracks: this._tracks
-        });
+        const copy = new StreamingData(this);
         return copy;
     }
 
@@ -78,100 +81,99 @@ export class StreamingData {
     }
 
     public groupAll(): this {
-        const res: PlayData = { 'total': {} };
-
-        Object.values(this._data).forEach((obj) => {
-            Object.entries(obj).forEach(([id, { playCount, playTime }]) => {
-                const entry = res['total'][id] || (res['total'][id] = { playCount: 0, playTime: 0 })
-                entry.playCount += playCount;
-                entry.playTime += playTime;
-            });
-        });
-
-        this._data = res
+        let res: PlayDataEntry[] = []
+        Object.entries(this._data).forEach(([period, arr]) => {
+            res = res.concat(arr)
+        })
+        this._data= {'total': this.group(res)}
         return this;
     }
 
     public groupByYear(): this {
-        const res: PlayData = {};
-
-        Object.entries(this._data).forEach(([period, obj]) => {
+        const res: PlayData = {}
+        Object.entries(this._data).forEach(([period, arr]) => {
             const year = period.slice(0, 4);
-
-            Object.entries(obj).forEach(([id, { playCount, playTime }]) => {
-                const group = res[year] || (res[year] = {});
-                const entry = group[id] || (group[id] = { playCount: 0, playTime: 0 })
-                entry.playCount += playCount;
-                entry.playTime += playTime;
-            });
+            const group = res[year] || [];
+            res[year] = group.concat(arr)
+        })
+        Object.entries(res).forEach(([year, arr]) => {
+            res[year] = this.group(arr);
         });
-
-        this._data = res;
+        this._data=res
         return this;
     }
 
     public groupByArtist(): this {
-        const res: PlayData = {};
-
-        Object.entries(this._data).forEach(([period, obj]) => {
-            Object.entries(obj).forEach(([id, { playCount, playTime }]) => {
-                const artist = this._tracks[id].artist
-                const group = res[period] || (res[period] = {});
-                const entry = group[artist] || (group[artist] = { playCount: 0, playTime: 0 })
-                entry.playCount += playCount;
-                entry.playTime += playTime;
-            });
-        });
-
-        this._data = res;
+        Object.entries(this._data).forEach(([period, arr]) => {
+            this._data[period] = this.group(arr.map(entry => {return { ...entry, id: this._tracks[entry.id!].artist }}))
+        })
         return this;
     }
 
-    public getTop(top: number): this {
-        const res: PlayData = {};
-
-        Object.entries(this._data).forEach(([period, arr]) => {
-            res[period] = Object.entries(arr)
-                .sort(([, a], [, b]) => {
+    public sort() {
+        Object.values(this._data).forEach((arr) => {
+            arr.sort((a, b) => {
                     if (a.playCount === b.playCount) {
                         return b.playTime - a.playTime;
                     }
                     return b.playCount - a.playCount;
                 })
-                .slice(0, top)
-                .reduce((acc, [id, entry], index) => {
-                    acc[index.toString()] = { id, ...entry };
-                    return acc;
-                }, {} as PlayDataEntry);
         });
 
-        this._data = res;
         return this;
+    }
+
+    public getTop(top: number): this {
+        Object.entries(this._data).forEach(([period, arr]) => {
+            if (arr.length >= top) {
+                this._data[period] = arr.slice(0, top);
+            }
+        });
+        return this;
+    }
+
+    public returnUnique() {
+        const res = new Set();
+    
+        Object.values(this._data).forEach((obj) => {
+            Object.values(obj).forEach((entry) => {
+            res.add(entry.id);
+          });
+        });
+
+        return res;
     }
 
     public enrichPlayData(dataType: "artists" | "songs") {
-        const res: PlayData = {};
-
-        Object.entries(this._data).forEach(([period, obj]) => {
-            res[period] = {}
-            Object.entries(obj).forEach(([key, entry]) => {
+        Object.entries(this._data).forEach(([period, arr]) => {
+            this._data[period] = arr.map(entry => {
                 const { id, ...rest } = entry
-                res[period][key] = dataType === "artists" ? { artist: id, ...rest } : { ...this._tracks[id!], ...rest };
-            });
+                return dataType === "artists" ? { artist: id, ...rest } : { ...this._tracks[id!], ...rest };
+            })
         });
-
-        this._data = res;
         return this;
     }
-}
 
-export function getJSONFromLocalStorage(key: string, storage: Storage) {
-    const dataString = storage.getItem(key);
-    if (dataString === null)
-        throw new Error('No data found')
-    try {
-        return JSON.parse(dataString);
-    } catch (error) {
-        throw new Error('Error parsing JSON');
+    private getJSONFromLocalStorage(key: string, storage: Storage) {
+        const dataString = storage.getItem(key);
+        if (dataString === null)
+            throw new Error('No data found')
+        try {
+            return JSON.parse(dataString);
+        } catch (error) {
+            throw new Error('Error parsing JSON');
+        }
+    }
+
+    private group(arr: PlayDataEntry[]): PlayDataEntry[] {
+        return Object.values(arr.reduce((acc, entry) => {
+            if (acc[entry.id!]) {
+                acc[entry.id!].playCount += entry.playCount;
+                acc[entry.id!].playTime += entry.playTime;
+                return acc
+            }
+            acc[entry.id!] = { ...entry };
+            return acc;
+        }, {} as { [id: string]: PlayDataEntry }));
     }
 }
