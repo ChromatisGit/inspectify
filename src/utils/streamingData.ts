@@ -9,13 +9,13 @@ export interface TrackData {
 }
 
 interface PlayDataEntry {
-        playTime: number;
-        playCount: number;
-        id?: string
-        track?: string;
-        artist?: string;
-        uri?: string;
-        album?: string;
+    playTime: number;
+    playCount: number;
+    id?: string
+    track?: string;
+    artist?: string;
+    uri?: string;
+    album?: string;
 }
 
 export interface PlayData {
@@ -77,12 +77,16 @@ export class StreamingData {
         return this;
     }
 
+    public getPeriod(period: string) {
+        return structuredClone(this._data[period]);
+    }
+
     public groupAll(): this {
         let res: PlayDataEntry[] = []
-        Object.entries(this._data).forEach(([period, arr]) => {
+        Object.values(this._data).forEach((arr) => {
             res = res.concat(arr)
         })
-        this._data= {'total': this.group(res)}
+        this._data = { 'total': this.group(res) }
         return this;
     }
 
@@ -96,13 +100,13 @@ export class StreamingData {
         Object.entries(res).forEach(([year, arr]) => {
             res[year] = this.group(arr);
         });
-        this._data=res
+        this._data = res
         return this;
     }
 
     public groupByArtist(): this {
         Object.entries(this._data).forEach(([period, arr]) => {
-            this._data[period] = this.group(arr.map(entry => {return { ...entry, id: this._tracks[entry.id!].artist }}))
+            this._data[period] = this.group(arr.map(entry => { return { ...entry, id: this._tracks[entry.id!].artist } }))
         })
         return this;
     }
@@ -110,11 +114,11 @@ export class StreamingData {
     public sort() {
         Object.values(this._data).forEach((arr) => {
             arr.sort((a, b) => {
-                    if (a.playCount === b.playCount) {
-                        return b.playTime - a.playTime;
-                    }
-                    return b.playCount - a.playCount;
-                })
+                if (a.playCount === b.playCount) {
+                    return b.playTime - a.playTime;
+                }
+                return b.playCount - a.playCount;
+            })
         });
 
         return this;
@@ -122,10 +126,10 @@ export class StreamingData {
 
     public removeTracksInSet(set: Set<string>) {
         Object.entries(this.data).forEach(([period, arr]) => {
-          this._data[period] = arr.filter(entry => !set.has(entry.id!))
+            this._data[period] = arr.filter(entry => !set.has(entry.id!))
         })
         return this;
-      }
+    }
 
     public getTop(top: number): this {
         Object.entries(this._data).forEach(([period, arr]) => {
@@ -138,11 +142,11 @@ export class StreamingData {
 
     public returnUnique() {
         const res = new Set<string>();
-    
+
         Object.values(this._data).forEach((obj) => {
             Object.values(obj).forEach((entry) => {
-            res.add(entry.id!);
-          });
+                res.add(entry.id!);
+            });
         });
 
         return res;
@@ -151,7 +155,7 @@ export class StreamingData {
     public enrichPlayData(dataType: "artists" | "songs") {
         Object.entries(this._data).forEach(([period, arr]) => {
             this._data[period] = arr.map(entry => {
-                const { id, ...rest } = entry
+                const { id, ...rest } = entry;
                 return dataType === "artists" ? { artist: id, ...rest } : { ...this._tracks[id!], ...rest };
             })
         });
