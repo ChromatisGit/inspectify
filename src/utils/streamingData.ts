@@ -36,11 +36,8 @@ export class StreamingData {
             this._tracks = this.getJSONFromLocalStorage('track_data', source);
             return
         }
-        if (source instanceof StreamingData) {
-            this._data = source.data;
-            this._tracks = source._tracks;
-        }
-        throw new Error()
+        this._data = source.data;
+        this._tracks = source._tracks;
     }
 
     public copy(): StreamingData {
@@ -123,6 +120,13 @@ export class StreamingData {
         return this;
     }
 
+    public removeTracksInSet(set: Set<string>) {
+        Object.entries(this.data).forEach(([period, arr]) => {
+          this._data[period] = arr.filter(entry => !set.has(entry.id!))
+        })
+        return this;
+      }
+
     public getTop(top: number): this {
         Object.entries(this._data).forEach(([period, arr]) => {
             if (arr.length >= top) {
@@ -133,11 +137,11 @@ export class StreamingData {
     }
 
     public returnUnique() {
-        const res = new Set();
+        const res = new Set<string>();
     
         Object.values(this._data).forEach((obj) => {
             Object.values(obj).forEach((entry) => {
-            res.add(entry.id);
+            res.add(entry.id!);
           });
         });
 

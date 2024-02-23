@@ -12,7 +12,7 @@ export default function Home() {
 
     const playCount = new StreamingData(localStorage)
 
-    const settings: Settings = {top: 10, show: "artists", time: "year"}
+    const settings: Settings = {top: 10, show: "songs", time: "month"}
 
     if(settings.time === "year")
         playCount.groupByYear()
@@ -23,7 +23,23 @@ export default function Home() {
     if(settings.show === "artists")
         playCount.groupByArtist()
 
-    playCount.sort().getTop(settings.top).enrichPlayData(settings.show)
+    const honorableMentions = playCount.copy()
+    
+    playCount.sort().getTop(settings.top)
+
+    if (settings.time !== "allTime") {
+        const topTracks = playCount.returnUnique()
+        
+        if(settings.time === "month")
+            honorableMentions.groupByYear()
+        if(settings.time === "year")
+            honorableMentions.groupAll()
+
+        honorableMentions.removeTracksInSet(topTracks).sort().getTop(settings.top).enrichPlayData(settings.show)
+        console.log(honorableMentions.data)
+    }
+
+    playCount.enrichPlayData(settings.show)
 
     console.log(playCount.data)
 
