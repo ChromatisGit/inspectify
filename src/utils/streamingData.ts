@@ -11,7 +11,11 @@ export interface TrackData {
 export interface PlayData {
     [group: string]: {
         [entry: string]: {
-            playTime: number; playCount: number
+            playTime: number; playCount: number;
+            track?: string,
+            artist?: string,
+            uri?: string,
+            album?: string
         }
     }
 }
@@ -36,7 +40,7 @@ export class StreamingData {
         this._tracks = tracks
     }
 
-    public returnCopy(): StreamingData {
+    public copy(): StreamingData {
         const copy = new StreamingData({
             data: this.data,
             tracks: this._tracks
@@ -157,7 +161,7 @@ export class StreamingDataArray {
         this._tracks = tracks
     }
 
-    public returnCopy(): StreamingDataArray {
+    public copy(): StreamingDataArray {
         const copy = new StreamingDataArray({
             data: this.data,
             tracks: this._tracks
@@ -174,17 +178,15 @@ export class StreamingDataArray {
         return this;
     }
 
-    public convertToSongObj() {
+    public convertToObj(objType: string) {
         const res: PlayData = {};
 
         Object.entries(this.data).forEach(([period, arr]) => {
             res[period] = {}
             arr.forEach((entry, pos) => {
-                const {id, ...rest} = entry
-                res[period][pos] = { ...this._tracks[id], ...rest };
+                const { id, ...rest } = entry
+                res[period][pos] = objType === "artists"? { artist: id, ...rest } : { ...this._tracks[id], ...rest };
             });
-
-            res;
         })
         return new StreamingData({ data: res, tracks: this._tracks })
     }

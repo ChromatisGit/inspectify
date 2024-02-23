@@ -2,6 +2,12 @@
 import { ButtonHome } from "@/components/button";
 import { StreamingData, getJSONFromLocalStorage } from "@/utils/streamingData";
 
+interface Settings {
+    top: number,
+    show: "artists" | "songs",
+    time: "month" | "year" | "allTime"
+}
+
 export default function Home() {
 
     const playCount = new StreamingData({
@@ -9,9 +15,20 @@ export default function Home() {
         tracks: getJSONFromLocalStorage('track_data', localStorage)
     })
 
-    const res = playCount.after(2023, 5).groupByYear().sort().getTop(10).convertToSongObj().data
+    const settings: Settings = {top: 10, show: "songs", time: "month"}
 
-    console.log(res)
+    if(settings.time === "year")
+        playCount.groupByYear()
+
+    if(settings.time === "allTime")
+        playCount.groupAll()
+
+    if(settings.show === "artists")
+        playCount.groupByArtist()
+
+    const result = playCount.sort().getTop(settings.top).convertToObj(settings.show)
+
+    console.log(result.data)
 
     return <>
         <ButtonHome />
