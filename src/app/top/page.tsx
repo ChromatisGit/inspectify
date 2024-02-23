@@ -15,7 +15,7 @@ export default function Home() {
         tracks: getJSONFromLocalStorage('track_data', localStorage)
     })
 
-    const settings: Settings = {top: 10, show: "songs", time: "month"}
+    const settings: Settings = {top: 10, show: "artists", time: "year"}
 
     if(settings.time === "year")
         playCount.groupByYear()
@@ -26,9 +26,9 @@ export default function Home() {
     if(settings.show === "artists")
         playCount.groupByArtist()
 
-    const result = playCount.sort().getTop(settings.top).convertToObj(settings.show)
+    playCount.getTop(settings.top).enrichPlayData(settings.show)
 
-    console.log(result.data)
+    console.log(playCount.data)
 
     return <>
         <ButtonHome />

@@ -8,23 +8,20 @@ export interface TrackData {
     }
 }
 
-export interface PlayData {
-    [group: string]: {
-        [entry: string]: {
-            playTime: number; playCount: number;
-            track?: string,
-            artist?: string,
-            uri?: string,
-            album?: string
-        }
+interface PlayDataEntry {
+    [entry: string]: {
+        playTime: number;
+        playCount: number;
+        id?: string
+        track?: string;
+        artist?: string;
+        uri?: string;
+        album?: string;
     }
 }
 
-interface PlayDataArray {
-    [group: string]:
-    {
-        id: string, playTime: number; playCount: number
-    }[]
+export interface PlayData {
+    [group: string]: PlayDataEntry
 }
 
 export class StreamingData {
@@ -130,8 +127,8 @@ export class StreamingData {
         return this;
     }
 
-    public sort() {
-        const res: PlayDataArray = {};
+    public getTop(top: number): this {
+        const res: PlayData = {};
 
         Object.entries(this._data).forEach(([period, arr]) => {
             res[period] = Object.entries(arr)
@@ -141,54 +138,30 @@ export class StreamingData {
                     }
                     return b.playCount - a.playCount;
                 })
-                .map(([id, entry]) => ({ id, ...entry }));
+                .slice(0, top)
+                .reduce((acc, [id, entry], index) => {
+                    acc[index.toString()] = { id, ...entry };
+                    return acc;
+                }, {} as PlayDataEntry);
         });
 
-        return new StreamingDataArray({ data: res, tracks: this._tracks });
-    }
-}
-
-export class StreamingDataArray {
-    private _tracks: TrackData;
-
-    private _data: PlayDataArray;
-    public get data(): PlayDataArray {
-        return structuredClone(this._data);
-    }
-
-    constructor({ data, tracks }: { data: PlayDataArray, tracks: TrackData }) {
-        this._data = data
-        this._tracks = tracks
-    }
-
-    public copy(): StreamingDataArray {
-        const copy = new StreamingDataArray({
-            data: this.data,
-            tracks: this._tracks
-        });
-        return copy;
-    }
-
-    public getTop(top: number): this {
-        Object.entries(this._data).forEach(([period, arr]) => {
-            if (arr.length >= top) {
-                this._data[period] = arr.slice(0, top);
-            }
-        });
+        this._data = res;
         return this;
     }
 
-    public convertToObj(objType: string) {
+    public enrichPlayData(dataType: "artists" | "songs") {
         const res: PlayData = {};
 
-        Object.entries(this.data).forEach(([period, arr]) => {
+        Object.entries(this._data).forEach(([period, obj]) => {
             res[period] = {}
-            arr.forEach((entry, pos) => {
+            Object.entries(obj).forEach(([key, entry]) => {
                 const { id, ...rest } = entry
-                res[period][pos] = objType === "artists"? { artist: id, ...rest } : { ...this._tracks[id], ...rest };
+                res[period][key] = dataType === "artists" ? { artist: id, ...rest } : { ...this._tracks[id!], ...rest };
             });
-        })
-        return new StreamingData({ data: res, tracks: this._tracks })
+        });
+
+        this._data = res;
+        return this;
     }
 }
 
