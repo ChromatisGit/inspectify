@@ -2,7 +2,8 @@ import Image from "next/image";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import { StreamingData } from "@/utils/streamingData";
+import { StreamingDataArray, StreamingData } from "@/utils/streamingData";
+import { JSX, useEffect, useState } from "react";
 
 interface Settings {
     top: number,
@@ -37,6 +38,53 @@ function ColumnTitle({ title, timeFrame }: { title: string, timeFrame: TimeFrame
 
 export function SongTable({ top, show, timeFrame }: Settings) {
 
+    //TODO showSlides should be responsive
+    const showSlides = 3;
+
+    const [streamData, setStreamData] = useState<StreamingDataArray | []>([]);
+    const [requestedImages, setRequestedImages] = useState<string[]>([]);
+
+    useEffect(() => {
+        const {data, images} = getModifiedStreamingData({ top, show, timeFrame, showSlides });
+        setStreamData(data);
+        setRequestedImages(images)
+    }, [top, show, timeFrame]);
+
+    const streamDataElements: JSX.Element[] = []
+
+    if (streamData){
+        streamData.forEach(([title, songs]) => {
+            streamDataElements.push(<ColumnTitle {...{ title, timeFrame }} />)
+            for (let i = 0; i < top; i++) {
+                const entry = i < songs.length ? <SongEntry track={songs[i].track} artist={songs[i].artist!} /> : <div />;
+                streamDataElements.push(entry);
+            }
+        })
+    }
+
+    const carouselSettings = {
+        dots: false,
+        infinite: false,
+        centerPadding: "60px",
+        slidesToShow: showSlides,
+        speed: 500,
+        rows: (top + 1),
+        swipeToSlide: false,
+        slidesPerRow: 1
+    };
+
+    return (
+        <div className="slider-container">
+            <Slider {...carouselSettings}>
+                {streamDataElements.map((item, index) => (
+                    <div key={index}>{item}</div>
+                ))}
+            </Slider>
+        </div>
+    );
+}
+
+function getModifiedStreamingData({ top, show, timeFrame, showSlides }: Settings & { showSlides: number }) {
     const playCount = new StreamingData(localStorage);
 
     if (timeFrame === "year")
@@ -63,7 +111,7 @@ export function SongTable({ top, show, timeFrame }: Settings) {
         honorableMentions.removeTracksInSet(topTracks).sort().getTop(top).enrichPlayData(show);
     }
 
-    const streamData = Object.entries(playCount.enrichPlayData(show).data);
+    const streamData: StreamingDataArray = Object.entries(playCount.enrichPlayData(show).data);
 
     if (timeFrame === "year" && streamData.length > 1) {
         streamData.push(['honorableMentions', honorableMentions.data["total"]]);
@@ -90,31 +138,31 @@ export function SongTable({ top, show, timeFrame }: Settings) {
         }
     }
 
-    const entries: any = [];
+    return {data: streamData, images: getUrlOfMissingImages({ streamData, top, showSlides })};
+}
 
-    streamData.forEach(([title, songs]) => {
-        entries.push(<ColumnTitle {...{ title, timeFrame }} />)
-        for (let i = 0; i < top; i++) {
-            const entry = i < songs.length? <SongEntry track={songs[i].track} artist={songs[i].artist!}/> : <div />;
-            entries.push(entry);
+function getUrlOfMissingImages({ streamData, showSlides, top }: { streamData: StreamingDataArray, showSlides: number, top: number }) {
+    const requestImage: Set<string> = new Set();
+
+    const renderedRows = Math.min(streamData.length, showSlides + 1)
+
+    //Grab images in view
+    for (let i = 0; i < top; i++) {
+        for (let ii = 0; ii < renderedRows; ii++) {
+            const entry = streamData[ii][1][i] ?? undefined;
+            if (entry && !entry.imageUrl) {
+                requestImage.add(entry.uri!);
+            }
         }
-    })
+    }
 
-    const carouselSettings = {
-        dots: false,
-        infinite: false,
-        centerPadding: "60px",
-        slidesToShow: 3,
-        speed: 500,
-        rows: (top+1),
-        swipeToSlide: false,
-        slidesPerRow: 1
-    };
-    return (
-        <div className="slider-container">
-            <Slider {...carouselSettings}>
-                {entries}
-            </Slider>
-        </div>
-    );
+    for (let i = renderedRows; i < streamData.length; i++) {
+        streamData[i][1].forEach((entry, index) => {
+            if (!entry.imageUrl) {
+                requestImage.add(entry.uri!);
+            }
+        })
+    }
+
+    return Array.from(requestImage);
 }

@@ -4,11 +4,12 @@ export interface TrackData {
         track: string,
         artist: string,
         uri: string,
-        album: string
+        album: string,
+        imageUrl?: string
     }
 }
 
-interface PlayDataEntry {
+export interface PlayDataEntry {
     playTime: number;
     playCount: number;
     id?: string
@@ -16,7 +17,10 @@ interface PlayDataEntry {
     artist?: string;
     uri?: string;
     album?: string;
+    imageUrl?: string
 }
+
+export type StreamingDataArray = [string, PlayDataEntry[]][]
 
 export interface PlayData {
     [group: string]: PlayDataEntry[]
