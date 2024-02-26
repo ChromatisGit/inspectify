@@ -1,0 +1,153 @@
+body {
+    background-color: #424D5B;
+}
+
+.slider-container {
+    padding: 80px 10% 10% 10%;
+}
+
+.song-entry {
+    display: flex;
+    align-items: center;
+    background-color: #d9d9d9;
+    padding: 10px;
+    margin: 8px 16px;
+    border-radius: 10px;
+}
+
+.song-image {
+    border-radius: 4px;
+    margin-right: 10px;
+    min-width: 64px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    flex: 0 0 auto
+}
+
+.song-details {
+    display: flex;
+    flex-direction: column;
+    width: 10px;
+    flex-grow: 1
+}
+
+.song-title {
+    color: #000000;
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.song-artist {
+    color: #292929;
+    font-size: 1em;
+}
+
+.song-artist, .song-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
+.song-playcount {
+    color: #2b2b2b;
+    flex: 0 0 auto;
+    margin-left: 15px;
+    margin-right: 10px;
+    font-size: 1.1em;
+}
+
+
+.slick-prev,
+.slick-next
+{
+    font-size: 0;
+    line-height: 0;
+
+    position: absolute;
+    top: 50%;
+
+    display: block;
+
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    transform: translate(0, -50%);
+
+    cursor: pointer;
+
+    color: transparent;
+    border: none;
+    outline: none;
+    background: transparent;
+}
+.slick-prev:hover,
+.slick-prev:focus,
+.slick-next:hover,
+.slick-next:focus
+{
+    color: transparent;
+    outline: none;
+    background: transparent;
+}
+.slick-prev:hover:before,
+.slick-prev:focus:before,
+.slick-next:hover:before,
+.slick-next:focus:before
+{
+    opacity: 1;
+}
+.slick-prev.slick-disabled:before,
+.slick-next.slick-disabled:before
+{
+    opacity: .25;
+}
+
+.slick-prev:before,
+.slick-next:before
+{
+    font-family: 'slick';
+    font-size: 20px;
+    line-height: 1;
+
+    opacity: .75;
+    color: white;
+
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.slick-prev
+{
+    left: -25px;
+}
+[dir='rtl'] .slick-prev
+{
+    right: -25px;
+    left: auto;
+}
+.slick-prev:before
+{
+    content: '←';
+}
+[dir='rtl'] .slick-prev:before
+{
+    content: '→';
+}
+
+.slick-next
+{
+    right: -25px;
+}
+[dir='rtl'] .slick-next
+{
+    right: auto;
+    left: -25px;
+}
+.slick-next:before
+{
+    content: '→';
+}
+[dir='rtl'] .slick-next:before
+{
+    content: '←';
+}

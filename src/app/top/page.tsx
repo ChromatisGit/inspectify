@@ -1,13 +1,14 @@
 'use client';
 import { ButtonHome } from "@/components/button";
 import { SongTable} from "./table";
+import '../../styles/top.css';
 
 
 export default function Home() {
     return <>
         <ButtonHome />
-        <div style={{ width: '80%', minWidth: '800px', margin: '0 auto' }}>
-            <SongTable {...{ top: 30, show: "tracks", timeFrame: "year" }}/>
+        <div className="table-container">
+            <SongTable {...{ top: 15, show: "tracks", timeFrame: "month" }}/>
         </div>
     </>;
 }
