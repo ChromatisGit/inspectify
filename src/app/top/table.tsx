@@ -4,16 +4,19 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { StreamingDataArray, StreamingData } from "@/utils/streamingData";
 import { JSX, useEffect, useState } from "react";
+import { fetchImages } from "@/utils/requestImages";
 
 interface Settings {
     top: number,
-    show: "artists" | "songs",
+    show: "artists" | "tracks",
     timeFrame: TimeFrame
 }
 
 type TimeFrame = "month" | "year" | "allTime";
 
 function SongEntry({ imageUrl, track, artist }: { imageUrl?: string, track?: string, artist: string, }) {
+
+    //TODO Replace with placeholder
     if (imageUrl === undefined)
         imageUrl = "https://i.scdn.co/image/ab67616d0000485111e50151974d60a789b9626d";
 
@@ -42,13 +45,22 @@ export function SongTable({ top, show, timeFrame }: Settings) {
     const showSlides = 3;
 
     const [streamData, setStreamData] = useState<StreamingDataArray | []>([]);
-    const [requestedImages, setRequestedImages] = useState<string[]>([]);
+    const [requestImages, setRequestImages] = useState<{uri: string, id: string}[]>([]);
 
     useEffect(() => {
         const {data, images} = getModifiedStreamingData({ top, show, timeFrame, showSlides });
         setStreamData(data);
-        setRequestedImages(images)
+        setRequestImages(images)
     }, [top, show, timeFrame]);
+
+    useEffect(() => {
+        if (requestImages.length > 0) {
+            fetchImages({requestImages, streamData, type: 'tracks'}).then(data => {
+                setStreamData(data.streamData);
+                setRequestImages(data.requestImages)
+            });
+        }
+    }, [requestImages, streamData]);
 
     const streamDataElements: JSX.Element[] = []
 
@@ -56,7 +68,7 @@ export function SongTable({ top, show, timeFrame }: Settings) {
         streamData.forEach(([title, songs]) => {
             streamDataElements.push(<ColumnTitle {...{ title, timeFrame }} />)
             for (let i = 0; i < top; i++) {
-                const entry = i < songs.length ? <SongEntry track={songs[i].track} artist={songs[i].artist!} /> : <div />;
+                const entry = i < songs.length ? <SongEntry track={songs[i].track} artist={songs[i].artist!} imageUrl={songs[i].imageUrl!} /> : <div />;
                 streamDataElements.push(entry);
             }
         })
@@ -142,7 +154,7 @@ function getModifiedStreamingData({ top, show, timeFrame, showSlides }: Settings
 }
 
 function getUrlOfMissingImages({ streamData, showSlides, top }: { streamData: StreamingDataArray, showSlides: number, top: number }) {
-    const requestImage: Set<string> = new Set();
+    const requestImage: Set<{uri: string, id: string}> = new Set();
 
     const renderedRows = Math.min(streamData.length, showSlides + 1)
 
@@ -151,7 +163,7 @@ function getUrlOfMissingImages({ streamData, showSlides, top }: { streamData: St
         for (let ii = 0; ii < renderedRows; ii++) {
             const entry = streamData[ii][1][i] ?? undefined;
             if (entry && !entry.imageUrl) {
-                requestImage.add(entry.uri!);
+                requestImage.add({uri: entry.uri!, id: entry.id!});
             }
         }
     }
@@ -159,7 +171,7 @@ function getUrlOfMissingImages({ streamData, showSlides, top }: { streamData: St
     for (let i = renderedRows; i < streamData.length; i++) {
         streamData[i][1].forEach((entry, index) => {
             if (!entry.imageUrl) {
-                requestImage.add(entry.uri!);
+                requestImage.add({uri: entry.uri!, id: entry.id!});
             }
         })
     }

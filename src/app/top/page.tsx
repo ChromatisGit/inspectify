@@ -7,7 +7,7 @@ export default function Home() {
     return <>
         <ButtonHome />
         <div style={{ width: '80%', minWidth: '800px', margin: '0 auto' }}>
-            <SongTable {...{ top: 10, show: "songs", timeFrame: "year" }}/>
+            <SongTable {...{ top: 30, show: "tracks", timeFrame: "year" }}/>
         </div>
     </>;
 }

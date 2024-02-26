@@ -84,7 +84,7 @@ function convertToPlayFormat(acc: MergedResult, entry: SpotifyEntry) {
       acc.trackData[id] = {
         track: entry.master_metadata_track_name,
         artist: entry.master_metadata_album_artist_name,
-        uri: entry.spotify_track_uri.slice("spotify:track:".length),
+        uri: entry.spotify_track_uri,
         album: entry.master_metadata_album_album_name,
       };
     }

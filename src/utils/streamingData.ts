@@ -36,8 +36,8 @@ export class StreamingData {
 
     constructor(source: Storage | StreamingData) {
         if (source instanceof Storage) {
-            this._data = this.getJSONFromLocalStorage('play_count_data', source);
-            this._tracks = this.getJSONFromLocalStorage('track_data', source);
+            this._data = getJSONFromLocalStorage('play_count_data', source);
+            this._tracks = getJSONFromLocalStorage('track_data', source);
             return
         }
         this._data = source.data;
@@ -156,25 +156,13 @@ export class StreamingData {
         return res;
     }
 
-    public enrichPlayData(dataType: "artists" | "songs") {
+    public enrichPlayData(dataType: "artists" | "tracks") {
         Object.entries(this._data).forEach(([period, arr]) => {
             this._data[period] = arr.map(entry => {
-                const { id, ...rest } = entry;
-                return dataType === "artists" ? { artist: id, ...rest } : { ...this._tracks[id!], ...rest };
+                return dataType === "artists" ? { artist: entry.id, ...entry } : { ...this._tracks[entry.id!], ...entry };
             })
         });
         return this;
-    }
-
-    private getJSONFromLocalStorage(key: string, storage: Storage) {
-        const dataString = storage.getItem(key);
-        if (dataString === null)
-            throw new Error('No data found')
-        try {
-            return JSON.parse(dataString);
-        } catch (error) {
-            throw new Error('Error parsing JSON');
-        }
     }
 
     private group(arr: PlayDataEntry[]): PlayDataEntry[] {
@@ -187,5 +175,16 @@ export class StreamingData {
             acc[entry.id!] = { ...entry };
             return acc;
         }, {} as { [id: string]: PlayDataEntry }));
+    }
+}
+
+export function getJSONFromLocalStorage(key: string, storage: Storage) {
+    const dataString = storage.getItem(key);
+    if (dataString === null)
+        throw new Error('No data found')
+    try {
+        return JSON.parse(dataString);
+    } catch (error) {
+        throw new Error('Error parsing JSON');
     }
 }
