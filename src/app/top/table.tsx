@@ -5,17 +5,20 @@ import { StreamingDataArray, StreamingData, PlayDataEntry } from "@/utils/stream
 import { JSX, useEffect, useState } from "react";
 import { fetchImages } from "@/utils/requestImages";
 import '../../styles/top.css';
+import { useInternalState } from "@/components/provider";
+import { langFlat } from "@/components/lang";
 
 interface Settings {
     top: number,
     show: "artists" | "tracks",
     timeFrame: TimeFrame
+    showSlides?: number
 }
 
 type TimeFrame = "month" | "year" | "allTime";
 
 
-export function SongEntry({song}: {song: PlayDataEntry}) {
+export function SongEntry({ song }: { song: PlayDataEntry }) {
     let { track, artist, imageUrl, playCount } = song
     // TODO: Replace with placeholder image
     if (imageUrl === undefined)
@@ -44,21 +47,36 @@ export function SongEntry({song}: {song: PlayDataEntry}) {
 }
 
 function ColumnTitle({ title, timeFrame }: { title: string, timeFrame: TimeFrame }) {
+    const [internalState, _] = useInternalState();
+    if (timeFrame === 'month') {
+        const year = title.slice(0, 4)
+        let period = title.slice(5)
+        if (period === "honorableMentions")
+            period = langFlat(internalState?.lang, `top.${period}`)
+        else
+            period = langFlat(internalState?.lang, `month.${period}`)
+
+        title = `${period} ${year}`
+    }
+
+    if (title === "honorableMentions")
+        title = langFlat(internalState?.lang, `top.${title}`)
+
     return (
-        <h1>{title}</h1>
+        <div className="column-title-container">
+            <h1 className="column-title">{title}</h1>
+        </div>
     )
 }
 
 export function SongTable({ top, show, timeFrame }: Settings) {
 
-    //TODO showSlides should be responsive
-    const showSlides = 3;
-
     const [streamData, setStreamData] = useState<StreamingDataArray | []>([]);
     const [requestImages, setRequestImages] = useState<{ uri: string, id: string }[]>([]);
+    const [showSlides, setShowSlides] = useState<number>(3);
 
     useEffect(() => {
-        const { data, images } = getModifiedStreamingData({ top, show, timeFrame, showSlides });
+        const { data, images } = getModifiedStreamingData({ top, show, timeFrame });
         setStreamData(data);
         setRequestImages(images)
     }, [top, show, timeFrame]);
@@ -71,6 +89,26 @@ export function SongTable({ top, show, timeFrame }: Settings) {
             });
         }
     }, [requestImages, streamData]);
+
+    useEffect(() => {
+        const updateShowSlides = () => {
+            if (window.innerWidth < 700) {
+                setShowSlides(1);
+            } else if (window.innerWidth < 1000) {
+                setShowSlides(2);
+            } else {
+                setShowSlides(3);
+            }
+        };
+
+        updateShowSlides();
+
+        window.addEventListener('resize', updateShowSlides);
+
+        return () => {
+            window.removeEventListener('resize', updateShowSlides);
+        };
+    }, []);
 
     const streamDataElements: JSX.Element[] = []
 
@@ -91,22 +129,42 @@ export function SongTable({ top, show, timeFrame }: Settings) {
         slidesToShow: showSlides,
         speed: 500,
         rows: (top + 1),
-        swipeToSlide: false,
+        swipeToSlide: true,
         slidesPerRow: 1
     };
 
     return (
-        <div className="slider-container">
-            <Slider {...carouselSettings}>
-                {streamDataElements.map((item, index) => (
-                    <div key={index}>{item}</div>
-                ))}
-            </Slider>
+        <div className="table-container">
+            <PlacementColumn top={top} />
+            <div className="slider-container">
+                <Slider {...carouselSettings}>
+                    {streamDataElements.map((item, index) => (
+                        <div key={index}>{item}</div>
+                    ))}
+                </Slider>
+            </div>
+        </div>
+    );
+}
+export function PlacementColumn({ top }: { top: number }) {
+
+    const placementElements: JSX.Element[] = []
+
+    for (let i = 1; i <= top; i++) {
+        const entry = <span className="placement-number">{i}</span>;
+        placementElements.push(entry);
+    }
+
+    return (
+        <div className="placement-column">
+            {placementElements.map((item, index) => (
+                <div className="placement-container" key={index}>{item}</div>
+            ))}
         </div>
     );
 }
 
-function getModifiedStreamingData({ top, show, timeFrame, showSlides }: Settings & { showSlides: number }) {
+function getModifiedStreamingData({ top, show, timeFrame }: Settings) {
     const playCount = new StreamingData(localStorage);
 
     if (timeFrame === "year")
@@ -160,27 +218,27 @@ function getModifiedStreamingData({ top, show, timeFrame, showSlides }: Settings
         }
     }
 
-    return { data: streamData, images: getUrlOfMissingImages({ streamData, top, showSlides }) };
+    return { data: streamData, images: getUrlOfMissingImages({ streamData, top }) };
 }
 
-function getUrlOfMissingImages({ streamData, showSlides, top }: { streamData: StreamingDataArray, showSlides: number, top: number }) {
+function getUrlOfMissingImages({ streamData, top }: { streamData: StreamingDataArray, top: number }) {
     const requestImage: Set<{ uri: string, id: string }> = new Set();
 
-    const renderedRows = Math.min(streamData.length, showSlides + 1)
+    const renderedRows = Math.min(streamData.length, 4)
 
     //Grab images in view
     for (let i = 0; i < top; i++) {
         for (let ii = 0; ii < renderedRows; ii++) {
             const entry = streamData[ii][1][i] ?? undefined;
-            if (entry && !entry.imageUrl) {
-                requestImage.add({ uri: entry.uri!, id: entry.id! });
+            if (entry && entry.uri !== undefined && entry.uri !== '' && !entry.imageUrl) {
+                requestImage.add({ uri: entry.uri, id: entry.id! });
             }
         }
     }
 
     for (let i = renderedRows; i < streamData.length; i++) {
         streamData[i][1].forEach((entry, index) => {
-            if (!entry.imageUrl) {
+            if (entry.uri !== undefined && entry.uri !== '' && !entry.imageUrl) {
                 requestImage.add({ uri: entry.uri!, id: entry.id! });
             }
         })
