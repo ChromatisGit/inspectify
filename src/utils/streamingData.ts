@@ -2,10 +2,21 @@ export interface TrackData {
     [key: string]:
     {
         track: string,
+        artistId: number,
         artist: string,
         uri: string,
         album: string,
         imageUrl?: string
+    }
+}
+
+export interface ArtistData {
+    [key: string]:
+    {
+        artist: string,
+        uri?: string,
+        imageUrl?: string
+        tracks: number[]
     }
 }
 
@@ -18,6 +29,7 @@ export interface PlayDataEntry {
     uri?: string;
     album?: string;
     imageUrl?: string
+    tracks?: number[]
 }
 
 export type StreamingDataArray = [string, PlayDataEntry[]][]
@@ -28,6 +40,7 @@ export interface PlayData {
 
 export class StreamingData {
     private _tracks: TrackData;
+    private _artists: ArtistData;
 
     private _data: PlayData;
     public get data(): PlayData {
@@ -38,10 +51,12 @@ export class StreamingData {
         if (source instanceof Storage) {
             this._data = getJSONFromLocalStorage('play_count_data', source);
             this._tracks = getJSONFromLocalStorage('track_data', source);
+            this._artists = getJSONFromLocalStorage('artist_data', source);
             return
         }
         this._data = source.data;
         this._tracks = source._tracks;
+        this._artists = source._artists;
     }
 
     public copy(): StreamingData {
@@ -110,7 +125,7 @@ export class StreamingData {
 
     public groupByArtist(): this {
         Object.entries(this._data).forEach(([period, arr]) => {
-            this._data[period] = this.group(arr.map(entry => { return { ...entry, id: this._tracks[entry.id!].artist } }))
+            this._data[period] = this.group(arr.map(entry => { return { ...entry, id: `${this._tracks[entry.id!].artistId }`} }))
         })
         return this;
     }
@@ -159,7 +174,7 @@ export class StreamingData {
     public enrichPlayData(dataType: "artists" | "tracks") {
         Object.entries(this._data).forEach(([period, arr]) => {
             this._data[period] = arr.map(entry => {
-                return dataType === "artists" ? { artist: entry.id, ...entry } : { ...this._tracks[entry.id!], ...entry };
+                return dataType === "artists" ? { ...this._tracks[entry.id!], ...entry } : { ...this._tracks[entry.id!], ...entry };
             })
         });
         return this;

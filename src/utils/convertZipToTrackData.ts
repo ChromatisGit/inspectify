@@ -1,5 +1,5 @@
 import JSZip from 'jszip';
-import { TrackData, PlayData } from './streamingData';
+import { TrackData, PlayData, ArtistData } from './streamingData';
 
 interface SpotifyEntry {
   ts: string,
@@ -12,9 +12,16 @@ interface SpotifyEntry {
 
 interface MergedResult {
   playData: PlayDataObj;
-  trackData: TrackData;
-  idCounter: number;
-  ids: { [key: string]: number };
+  tracks: {
+    data: TrackData;
+    ids: { [key: string]: number }
+    counter: number;
+  };
+  artists: {
+    data: ArtistData;
+    ids: { [key: string]: number };
+    counter: number;
+  };
 }
 
 interface PlayDataObj {
@@ -40,7 +47,7 @@ export async function convertZipToTrackData(file: File) {
   if (folderNames.length !== 1 || folderNames[0] !== 'Spotify Extended Streaming History/')
     throw new Error('upload.unknownZipError')
 
-  const result: MergedResult = { ids: {}, trackData: {}, playData: {}, idCounter: 1 }
+  const result: MergedResult = { tracks: {data: {}, ids: {}, counter: 1}, artists: {data: {}, ids: {}, counter: 1}, playData: {}}
   await Promise.all(
     Object.keys(zipFile.files).map(async (filename) => {
       const fileData = await zipFile.files[filename].async('string');
@@ -64,34 +71,46 @@ export async function convertZipToTrackData(file: File) {
     {} as PlayData
   );
 
-  const { trackData } = result;
+  const trackData = result.tracks.data;
+  const artistData = result.artists.data;
 
-  return { playData, trackData }
+  return { playData, trackData, artistData }
 }
 
 function convertToPlayFormat(acc: MergedResult, entry: SpotifyEntry) {
   if (entry.ms_played > 30000 && entry.master_metadata_track_name) {
 
     const trackArtistKey = `${entry.master_metadata_track_name}-${entry.master_metadata_album_artist_name}`;
+    const artist = entry.master_metadata_album_artist_name
     const period = entry.ts.slice(0, 7);
 
-    let id = acc.ids[trackArtistKey];
+    let artistId = acc.artists.ids[artist];
+    if (!artistId) {
+      artistId = acc.artists.counter++;
+      acc.artists.ids[artist] = artistId;
+      acc.artists.data[artistId] = {
+        artist: artist,
+        tracks: []
+      };
+    }
 
-    // Check if the combination of track and artist has an id
-    if (!id) {
-      id = acc.idCounter++;
-      acc.ids[trackArtistKey] = id;
-      acc.trackData[id] = {
+    let trackId = acc.tracks.ids[trackArtistKey];
+    if (!trackId) {
+      trackId = acc.tracks.counter++;
+      acc.tracks.ids[trackArtistKey] = trackId;
+      acc.tracks.data[trackId] = {
         track: entry.master_metadata_track_name,
-        artist: entry.master_metadata_album_artist_name,
+        artist: artist,
+        artistId: artistId,
         uri: entry.spotify_track_uri,
         album: entry.master_metadata_album_album_name,
       };
+      acc.artists.data[artistId].tracks.push(trackId)
     }
 
     // Increase Play Count
     const periodMap = acc.playData[period] || (acc.playData[period] = {});
-    const newEntry =  periodMap[id] || (periodMap[id] = {playCount: 0, playTime: 0})
+    const newEntry =  periodMap[trackId] || (periodMap[trackId] = {playCount: 0, playTime: 0})
 
     newEntry.playCount += 1;
     newEntry.playTime += Math.floor(entry.ms_played/1000);

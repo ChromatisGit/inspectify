@@ -3,7 +3,7 @@ import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import { StreamingDataArray, StreamingData, PlayDataEntry } from "@/utils/streamingData";
 import { JSX, useEffect, useState } from "react";
-import { fetchImages } from "@/utils/requestImages";
+import { StreamDataSetter, fetchAdditionalData, receiveImages } from "@/utils/requestSpotify";
 import '../../styles/top.css';
 import { useInternalState } from "@/components/provider";
 import { langFlat } from "@/components/lang";
@@ -72,23 +72,11 @@ function ColumnTitle({ title, timeFrame }: { title: string, timeFrame: TimeFrame
 export function SongTable({ top, show, timeFrame }: Settings) {
 
     const [streamData, setStreamData] = useState<StreamingDataArray | []>([]);
-    const [requestImages, setRequestImages] = useState<{ uri: string, id: string }[]>([]);
     const [showSlides, setShowSlides] = useState<number>(3);
 
     useEffect(() => {
-        const { data, images } = getModifiedStreamingData({ top, show, timeFrame });
-        setStreamData(data);
-        setRequestImages(images)
+        convertStreamingData({ top, show, timeFrame, setStreamData});
     }, [top, show, timeFrame]);
-
-    useEffect(() => {
-        if (requestImages.length > 0) {
-            fetchImages({ requestImages, streamData, type: 'tracks' }).then(data => {
-                setStreamData(data.streamData);
-                setRequestImages(data.requestImages)
-            });
-        }
-    }, [requestImages, streamData]);
 
     useEffect(() => {
         const updateShowSlides = () => {
@@ -164,7 +152,7 @@ export function PlacementColumn({ top }: { top: number }) {
     );
 }
 
-function getModifiedStreamingData({ top, show, timeFrame }: Settings) {
+function convertStreamingData({ top, show, timeFrame, setStreamData }: Settings & {setStreamData: StreamDataSetter}) {
     const playCount = new StreamingData(localStorage);
 
     if (timeFrame === "year")
@@ -218,31 +206,41 @@ function getModifiedStreamingData({ top, show, timeFrame }: Settings) {
         }
     }
 
-    return { data: streamData, images: getUrlOfMissingImages({ streamData, top }) };
+    setStreamData(streamData)
+    getUrlOfMissingImages({ streamData, setStreamData, top, type: show})
 }
 
-function getUrlOfMissingImages({ streamData, top }: { streamData: StreamingDataArray, top: number }) {
+function getUrlOfMissingImages({ streamData, setStreamData, top, type }: { streamData: StreamingDataArray, top: number, setStreamData: StreamDataSetter, type: "artists" | "tracks"}) {
     const requestImage: Set<{ uri: string, id: string }> = new Set();
 
-    const renderedRows = Math.min(streamData.length, 4)
+    const renderedRows = Math.min(streamData.length, 4);
+
+    const addToSet = (entry: PlayDataEntry) => {
+        if (entry && entry.uri !== undefined && entry.uri !== '' && !entry.imageUrl) {
+            requestImage.add({ uri: entry.uri, id: entry.id! });
+            return;
+        }
+    };
 
     //Grab images in view
     for (let i = 0; i < top; i++) {
         for (let ii = 0; ii < renderedRows; ii++) {
             const entry = streamData[ii][1][i] ?? undefined;
-            if (entry && entry.uri !== undefined && entry.uri !== '' && !entry.imageUrl) {
-                requestImage.add({ uri: entry.uri, id: entry.id! });
-            }
+            addToSet(entry)
         }
     }
 
     for (let i = renderedRows; i < streamData.length; i++) {
-        streamData[i][1].forEach((entry, index) => {
-            if (entry.uri !== undefined && entry.uri !== '' && !entry.imageUrl) {
-                requestImage.add({ uri: entry.uri!, id: entry.id! });
-            }
+        streamData[i][1].forEach((entry) => {
+            addToSet(entry)
         })
     }
 
-    return Array.from(requestImage);
+    fetchAdditionalData({
+        uris: Array.from(requestImage),
+        type,
+        callback: receiveImages,
+        streamData,
+        setStreamData
+    })
 }
