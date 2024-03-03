@@ -260,7 +260,9 @@ function fetchArtistUris({ requestArtistUri, streamData, setStreamData }: { requ
 
     const trackData: TrackData = getJSONFromLocalStorage('track_data', localStorage);
 
-    const uris = Array.from(requestArtistUri).map((e) => { return { uri: trackData[e.tracks[0]].uri, id: e.id } })
+    const uris = Array.from(requestArtistUri).map((e) => { return { uri: trackData[e.tracks[0]].uri, id: e.tracks[0].toString() } })
+
+    console.log(uris)
 
     fetchAdditionalData({
         uris,

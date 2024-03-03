@@ -70,6 +70,7 @@ function receiveTrackData(response: SyncResponse, { uris, streamData }: {
   }, {} as { [key: string]: string });
 
   const storageData: TrackData = getJSONFromLocalStorage('track_data', localStorage);
+  console.log(imageMap)
   uris.forEach(entry => {
     storageData[entry.id].imageUrl = imageMap[entry.id]
   })
@@ -93,7 +94,10 @@ function receiveTrackData(response: SyncResponse, { uris, streamData }: {
       receivedImages({ imageMap, ...streamData })
       break;
     case "receivedArtistUris":
-      receivedArtistUris({ artistUriMap, ...streamData })
+      const artistUris = uris.map(({ id }) => {
+        return { id: storageData[id].artistId!.toString(), uri: artistUriMap[id] }
+      })
+      receivedArtistUris({ artistUris, ...streamData })
       break;
   }
 }
@@ -145,22 +149,11 @@ function receivedImages({ imageMap, data, setter }:
   setter(data);
 }
 
-async function receivedArtistUris({ artistUriMap, data, setter }:
-  { artistUriMap: { [key: string]: string; }, data: StreamingDataArray, setter: StreamDataSetter }) {
+async function receivedArtistUris({ artistUris, data, setter }:
+  { artistUris: { id: string; uri: string; }[], data: StreamingDataArray, setter: StreamDataSetter }) {
 
-  data = data.map(group => {
-    group[1] = group[1].map(entry => {
-      const artistUri = artistUriMap[entry.id!];
-      if (artistUri)
-        return { ...entry, artistUri };
-      return entry;
-    })
-    return group;
-  });
-
-  const uris = Object.entries(artistUriMap).map(([a, b]) => {return {id: a, uri: b}} )
   fetchAdditionalData({
-    uris: uris,
+    uris: artistUris,
     type: 'artists',
     streamData: {
       setter,

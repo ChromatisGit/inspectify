@@ -7,7 +7,7 @@ export default function Home() {
     return <>
         <ButtonHome />
         <div>
-            <SongTable {...{ top: 10, show: "artists", timeFrame: "year" }}/>
+            <SongTable {...{ top: 40, show: "artists", timeFrame: "allTime" }}/>
         </div>
     </>;
 }
