@@ -47,7 +47,7 @@ export async function convertZipToTrackData(file: File) {
   if (folderNames.length !== 1 || folderNames[0] !== 'Spotify Extended Streaming History/')
     throw new Error('upload.unknownZipError')
 
-  const result: MergedResult = { tracks: {data: {}, ids: {}, counter: 1}, artists: {data: {}, ids: {}, counter: 1}, playData: {}}
+  const result: MergedResult = { tracks: {data: {}, ids: {}, counter: 0}, artists: {data: {}, ids: {}, counter: 0}, playData: {}}
   await Promise.all(
     Object.keys(zipFile.files).map(async (filename) => {
       const fileData = await zipFile.files[filename].async('string');
@@ -78,7 +78,7 @@ export async function convertZipToTrackData(file: File) {
 }
 
 function convertToPlayFormat(acc: MergedResult, entry: SpotifyEntry) {
-  if (entry.ms_played > 30000 && entry.master_metadata_track_name) {
+  if (entry.ms_played > 30000 && entry.spotify_track_uri) {
 
     const trackArtistKey = `${entry.master_metadata_track_name}-${entry.master_metadata_album_artist_name}`;
     const artist = entry.master_metadata_album_artist_name

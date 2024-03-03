@@ -1,9 +1,9 @@
 import Image from "next/image";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
-import { StreamingDataArray, StreamingData, PlayDataEntry } from "@/utils/streamingData";
+import { StreamingDataArray, StreamingData, PlayDataEntry, getJSONFromLocalStorage, TrackData } from "@/utils/streamingData";
 import { JSX, useEffect, useState } from "react";
-import { StreamDataSetter, fetchAdditionalData, receiveImages } from "@/utils/requestSpotify";
+import { StreamDataSetter, fetchAdditionalData } from "@/utils/requestSpotify";
 import '../../styles/top.css';
 import { useInternalState } from "@/components/provider";
 import { langFlat } from "@/components/lang";
@@ -75,7 +75,7 @@ export function SongTable({ top, show, timeFrame }: Settings) {
     const [showSlides, setShowSlides] = useState<number>(3);
 
     useEffect(() => {
-        convertStreamingData({ top, show, timeFrame, setStreamData});
+        convertStreamingData({ top, show, timeFrame, setStreamData });
     }, [top, show, timeFrame]);
 
     useEffect(() => {
@@ -152,7 +152,8 @@ export function PlacementColumn({ top }: { top: number }) {
     );
 }
 
-function convertStreamingData({ top, show, timeFrame, setStreamData }: Settings & {setStreamData: StreamDataSetter}) {
+function convertStreamingData({ top, show, timeFrame, setStreamData }: Settings & { setStreamData: StreamDataSetter }) {
+
     const playCount = new StreamingData(localStorage);
 
     if (timeFrame === "year")
@@ -207,11 +208,12 @@ function convertStreamingData({ top, show, timeFrame, setStreamData }: Settings 
     }
 
     setStreamData(streamData)
-    getUrlOfMissingImages({ streamData, setStreamData, top, type: show})
+    getUrlOfMissingImages({ streamData, setStreamData, top, type: show })
 }
 
-function getUrlOfMissingImages({ streamData, setStreamData, top, type }: { streamData: StreamingDataArray, top: number, setStreamData: StreamDataSetter, type: "artists" | "tracks"}) {
+function getUrlOfMissingImages({ streamData, setStreamData, top, type }: { streamData: StreamingDataArray, top: number, setStreamData: StreamDataSetter, type: "artists" | "tracks" }) {
     const requestImage: Set<{ uri: string, id: string }> = new Set();
+    const requestArtistUri: Set<{ tracks: number[], id: string }> = new Set();
 
     const renderedRows = Math.min(streamData.length, 4);
 
@@ -219,6 +221,9 @@ function getUrlOfMissingImages({ streamData, setStreamData, top, type }: { strea
         if (entry && entry.uri !== undefined && entry.uri !== '' && !entry.imageUrl) {
             requestImage.add({ uri: entry.uri, id: entry.id! });
             return;
+        }
+        if (entry.tracks && entry.tracks.length > 0) {
+            requestArtistUri.add({ tracks: entry.tracks, id: entry.id! });
         }
     };
 
@@ -236,11 +241,56 @@ function getUrlOfMissingImages({ streamData, setStreamData, top, type }: { strea
         })
     }
 
+    if (requestArtistUri.size > 0) {
+        fetchArtistUris({ requestArtistUri, streamData, setStreamData })
+    }
+
     fetchAdditionalData({
         uris: Array.from(requestImage),
-        type,
-        callback: receiveImages,
-        streamData,
-        setStreamData
+        type: type,
+        streamData: {
+            setter: setStreamData,
+            data: streamData,
+            add: 'receivedImages'
+        }
     })
+}
+
+function fetchArtistUris({ requestArtistUri, streamData, setStreamData }: { requestArtistUri: Set<{ tracks: number[]; id: string; }>, streamData: StreamingDataArray, setStreamData: StreamDataSetter }) {
+
+    const trackData: TrackData = getJSONFromLocalStorage('track_data', localStorage);
+
+    const uris = Array.from(requestArtistUri).map((e) => { return { uri: trackData[e.tracks[0]].uri, id: e.id } })
+
+    console.log(uris)
+
+    fetchAdditionalData({
+        uris,
+        type: "tracks",
+        streamData: {
+            setter: setStreamData,
+            data: streamData,
+            add: 'receivedArtistUris'
+        }
+    })
+}
+
+function sortTracksByPlaycount({ requestArtistUri }: { requestArtistUri: Set<{ tracks: number[]; id: string; }> }) {
+    const playCount = new StreamingData(localStorage);
+    const playCountData = playCount.groupAll().enrichPlayData("tracks").data.total
+
+    const artistTracks = Array.from(requestArtistUri).map((entry) => {
+        entry.tracks = entry.tracks
+            .map((e) => [e, playCountData[e].playCount])
+            .sort((a, b) => b[1] - a[1])
+            .map((e) => e[0])
+        return entry;
+    })
+
+    //Write sorted tracks list back to storage
+    const artistData = getJSONFromLocalStorage('artist_data', localStorage);
+    artistTracks.forEach(entry => {
+        artistData[entry.id].tracks = entry.tracks
+    })
+    localStorage.setItem('artist_data', JSON.stringify(artistData));
 }

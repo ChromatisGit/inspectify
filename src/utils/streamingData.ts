@@ -174,7 +174,7 @@ export class StreamingData {
     public enrichPlayData(dataType: "artists" | "tracks") {
         Object.entries(this._data).forEach(([period, arr]) => {
             this._data[period] = arr.map(entry => {
-                return dataType === "artists" ? { ...this._tracks[entry.id!], ...entry } : { ...this._tracks[entry.id!], ...entry };
+                return dataType === "artists" ? { ...this._artists[entry.id!], ...entry } : { ...this._tracks[entry.id!], ...entry };
             })
         });
         return this;

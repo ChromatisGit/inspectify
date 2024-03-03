@@ -40,14 +40,15 @@ class RequestManager {
 
     private async sendRequest(request: NewRequest) {
         const { endpoint, headers, callback, parameters } = request;
+        let syncResponse: SyncResponse;
         try {
+            console.log(endpoint)
             const response = await fetch(endpoint, { headers });
             const content = await response.json() ?? {};
-            const syncResponse: SyncResponse = { status: response.status, content};
+            syncResponse = { status: response.status, content};
             if(!response.ok) {
                 syncResponse.request = request
             }
-            callback(syncResponse, parameters);
         } catch (error: any) {
             console.error('Error:', error);
             let statusCode;
@@ -56,8 +57,10 @@ class RequestManager {
             } else {
                 statusCode = 500;
             }
-            const syncResponse: SyncResponse = { status: statusCode, content: {}};
-            callback(syncResponse, parameters);
+            syncResponse = { status: statusCode, content: {}};
+        }
+        finally {
+            callback(syncResponse!, parameters);
         }
     }
 
