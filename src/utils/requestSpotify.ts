@@ -159,8 +159,6 @@ async function receivedArtistUris({ artistUriMap, data, setter }:
   });
 
   const uris = Object.entries(artistUriMap).map(([a, b]) => {return {id: a, uri: b}} )
-  console.log('test')
-  console.log(uris)
   fetchAdditionalData({
     uris: uris,
     type: 'artists',

@@ -31,7 +31,6 @@ class RequestManager {
 
             if (this.requestQueue.length > 0) {
                 const request = this.requestQueue.shift()!;
-                console.log("Request sent")
                 await this.sendRequest(request);
             }
             await new Promise(resolve => setTimeout(resolve, 500));
@@ -42,7 +41,6 @@ class RequestManager {
         const { endpoint, headers, callback, parameters } = request;
         let syncResponse: SyncResponse;
         try {
-            console.log(endpoint)
             const response = await fetch(endpoint, { headers });
             const content = await response.json() ?? {};
             syncResponse = { status: response.status, content};

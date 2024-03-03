@@ -262,8 +262,6 @@ function fetchArtistUris({ requestArtistUri, streamData, setStreamData }: { requ
 
     const uris = Array.from(requestArtistUri).map((e) => { return { uri: trackData[e.tracks[0]].uri, id: e.id } })
 
-    console.log(uris)
-
     fetchAdditionalData({
         uris,
         type: "tracks",

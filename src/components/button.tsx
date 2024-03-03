@@ -96,7 +96,6 @@ export function ButtonSubmitHistory({ callbackError, callbackSuccess }: callback
         if (file) {
             convertZipToTrackData(file)
                 .then(result => {
-                    console.log("success")
                     const { playData, trackData, artistData } = result;
                     localStorage.setItem('play_count_data', JSON.stringify(playData));
                     localStorage.setItem('track_data', JSON.stringify(trackData));
